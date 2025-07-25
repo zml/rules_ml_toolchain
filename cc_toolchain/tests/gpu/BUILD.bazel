@@ -34,6 +34,21 @@ cuda_library(
     tags = ["cuda-only"],
 )
 
+cuda_library(
+    name = "nvptxcomp",
+    srcs = ["nvptxcomp.cc"],
+    tags = ["cuda-only"],
+)
+
+cc_binary(
+    name = "nvptxcomp_bin",
+    srcs = [":nvptxcomp"],
+    tags = ["cuda-only"],
+    deps = [
+        "@local_config_cuda//cuda:implicit_cuda_headers_dependency",
+    ]
+)
+
 cuda_cc_test(
     name = "vector_cuda_test",
     srcs = [
