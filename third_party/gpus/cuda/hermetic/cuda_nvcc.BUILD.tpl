@@ -66,10 +66,17 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+%{multiline_comment}
 cc_import(
-   name = "nvptxcompiler",
+    name = "nvptxcompiler_static_library",
     hdrs = ["include/nvPTXCompiler.h"],
     static_library = "lib/libnvptxcompiler_static.a",
+)
+%{multiline_comment}
+
+cc_library(
+    name = "nvptxcompiler",
+    %{comment}deps = [":nvptxcompiler_static_library"],
     visibility = ["@local_config_cuda//cuda:__pkg__"],
 )
 

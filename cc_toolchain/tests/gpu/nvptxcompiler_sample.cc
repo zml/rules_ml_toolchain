@@ -4,8 +4,8 @@
 #include <cstring>
 
 const char* ptx_code = R"(
-.version 6.0
-.target sm_30
+.version 8.3
+.target sm_75
 .address_size 64
 
 .visible .entry add_kernel(
@@ -14,11 +14,22 @@ const char* ptx_code = R"(
     .param .u64 c
 )
 {
-    .reg .u64 t1, t2, t3;
-    ld.param.u64  t1, [a];
-    ld.param.u64  t2, [b];
-    add.u64       t3, t1, t2;
-    st.param.u64  [c], t3;
+    .reg .u64 reg_a, reg_b, reg_c_ptr, reg_result;
+
+    // Load the input pointers into registers
+    ld.param.u64 reg_a, [a];
+    ld.param.u64 reg_b, [b];
+    ld.param.u64 reg_c_ptr, [c]; // This is the address where we will store the result
+
+    // Dereference the pointers to get the actual values and add them
+    // Note: This assumes a and b point to global memory
+    ld.global.u64 reg_a, [reg_a];
+    ld.global.u64 reg_b, [reg_b];
+    add.u64       reg_result, reg_a, reg_b;
+
+    // Store the result to the global memory location pointed to by c
+    st.global.u64 [reg_c_ptr], reg_result;
+
     ret;
 }
 )";
@@ -31,12 +42,12 @@ int main() {
         return 1;
     }
 
-    // Compile PTX
-    result = nvPTXCompilerCompile(compiler, 0, nullptr);
+    const char* compile_options[] = {"-arch=sm_75"};
+    result = nvPTXCompilerCompile(compiler, 1, compile_options);
     if (result != NVPTXCOMPILE_SUCCESS) {
         size_t logSize;
         nvPTXCompilerGetErrorLogSize(compiler, &logSize);
-        std::vector<char> log(logSize + 1, 0); // null-terminate
+        std::vector<char> log(logSize + 1, 0);
         nvPTXCompilerGetErrorLog(compiler, log.data());
         std::cerr << "PTX compilation failed:\n" << log.data() << std::endl;
         nvPTXCompilerDestroy(&compiler);

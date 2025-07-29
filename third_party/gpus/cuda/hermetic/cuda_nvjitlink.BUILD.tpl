@@ -11,9 +11,15 @@ cc_import(
     shared_library = "lib/libnvJitLink.so.%{libnvjitlink_version}",
 )
 %{multiline_comment}
+
+cc_import(
+    name = "nvjitlink_compiler",
+    hdrs = ["include/nvJitLink.h"],
+    static_library = "lib/libnvJitLink_static.a",
+)
 cc_library(
     name = "nvjitlink",
-    %{comment}deps = [":nvjitlink_shared_library"],
+    %{comment}deps = [":nvjitlink_shared_library", ":nvjitlink_compiler"],
     %{comment}linkopts = cuda_rpath_flags("nvidia/nvjitlink/lib"),
     visibility = ["//visibility:public"],
 )
