@@ -37,6 +37,12 @@ import tempfile
 ONEAPI_LIBRARY_PATH = os.environ['ONEAPI_LIBRARY_PATH']
 ONEAPI_VERSION = os.environ['ONEAPI_VERSION']
 
+def oneapi_major_version():
+  try:
+    return int(ONEAPI_VERSION.split(".")[0])
+  except ValueError:
+    return 0
+
 def check_is_intel_llvm(path):
   cmd = path + " -dM -E -x c /dev/null | grep '__INTEL_LLVM_COMPILER'"
   check_result = subprocess.getoutput(cmd)
@@ -102,7 +108,8 @@ def call_compiler(argv, link = False, sycl_compile = True):
   common_flags.append("-fno-fast-math")
   common_flags.append("-fexceptions")
   # ref: https://github.com/openxla/xla/commit/631797c84cbb02e805ec89090214e8093fd8ba1d
-  common_flags.append("-Wno-implicit-float-size-conversion")
+  if oneapi_major_version() < 2026:
+    common_flags.append("-Wno-implicit-float-size-conversion")
 
   compile_flags = []
   compile_flags.append('-DDNNL_GRAPH_WITH_SYCL=1')

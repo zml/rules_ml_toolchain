@@ -40,6 +40,55 @@ def _download_distribution(ctx, dist):
 
     ctx.delete(file_name)
 
+def _install_distribution(ctx, dist):
+    # buildifier: disable=function-docstring-args
+    """Downloads and installs an Intel offline installer into this repository."""
+
+    url = dist[0]
+    file_name = _get_file_name(url)
+    print("Downloading {}".format(url))  # buildifier: disable=print
+    ctx.download(
+        url = url,
+        output = file_name,
+        sha256 = dist[1],
+    )
+
+    if ctx.path("compiler/2026.0/bin/icpx").exists:
+        print("oneAPI 2026.0 is already installed in this repository; skipping installer")  # buildifier: disable=print
+        ctx.delete(file_name)
+        return
+
+    repository_path = str(ctx.path("."))
+    print("Installing {} into {}".format(file_name, repository_path))  # buildifier: disable=print
+    result = ctx.execute(
+        [
+            "sh",
+            file_name,
+            "-a",
+            "--silent",
+            "--cli",
+            "--eula=accept",
+            "--install-dir={}".format(repository_path),
+            "--instance=oneapi",
+        ],
+        environment = {
+            "HOME": repository_path,
+            "XDG_CACHE_HOME": repository_path + "/.cache",
+        },
+        timeout = 3600,
+    )
+    if result.return_code:
+        fail("Failed to install {}:\nstdout:\n{}\nstderr:\n{}".format(
+            file_name,
+            result.stdout,
+            result.stderr,
+        ))
+
+    ctx.delete(file_name)
+
+def _is_installer_distribution(dist):
+    return len(dist) > 3 and dist[3] == "installer"
+
 def _get_oneapi_version(ctx):
     return ctx.getenv("ONEAPI_VERSION", "")
 
@@ -50,7 +99,7 @@ def _get_dist_key(ctx):
     oneapi_version = _get_oneapi_version(ctx)
     os_id = _get_os(ctx)
     if not oneapi_version:
-        oneapi_version = "2025.1"
+        oneapi_version = "2026.0"
     if not os_id:
         os_id = "ubuntu_24.10"
 
@@ -83,7 +132,10 @@ def _use_downloaded_archive(ctx):
                 .format(version = _get_oneapi_version(ctx), platform = _get_os(ctx)),
         )
 
-    _download_distribution(ctx, dist)
+    if _is_installer_distribution(dist):
+        _install_distribution(ctx, dist)
+    else:
+        _download_distribution(ctx, dist)
 
     if ctx.name.endswith("level_zero"):
         _handle_level_zero(ctx)
