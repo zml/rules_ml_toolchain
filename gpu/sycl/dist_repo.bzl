@@ -40,6 +40,30 @@ def _download_distribution(ctx, dist):
 
     ctx.delete(file_name)
 
+def _extract_deb_distribution(ctx, dist):
+    # buildifier: disable=function-docstring-args
+    """Downloads and extracts a Debian package into this repository."""
+
+    url = dist[0]
+    file_name = _get_file_name(url)
+    print("Downloading {}".format(url))  # buildifier: disable=print
+    ctx.download(
+        url = url,
+        output = file_name,
+        sha256 = dist[1],
+    )
+
+    print("Extracting Debian package {}".format(file_name))  # buildifier: disable=print
+    result = ctx.execute(["dpkg-deb", "-x", file_name, "."])
+    if result.return_code:
+        fail("Failed to extract {}:\nstdout:\n{}\nstderr:\n{}".format(
+            file_name,
+            result.stdout,
+            result.stderr,
+        ))
+
+    ctx.delete(file_name)
+
 def _install_distribution(ctx, dist):
     # buildifier: disable=function-docstring-args
     """Downloads and installs an Intel offline installer into this repository."""
@@ -89,6 +113,9 @@ def _install_distribution(ctx, dist):
 def _is_installer_distribution(dist):
     return len(dist) > 3 and dist[3] == "installer"
 
+def _is_deb_distribution(dist):
+    return len(dist) > 3 and dist[3] == "deb"
+
 def _get_oneapi_version(ctx):
     return ctx.getenv("ONEAPI_VERSION", "")
 
@@ -116,8 +143,40 @@ def _build_file(ctx, build_file):
     ctx.file("BUILD.bazel", ctx.read(build_file))
 
 def _handle_level_zero(ctx):
+    if ctx.path("usr/include/level_zero").exists and not ctx.path("include").exists:
+        ctx.symlink("usr/include/level_zero", "include")
+
     # Symlink for includes backward compatibility (example: #include <level_zero/ze_api.h>)
-    ctx.symlink("include", "level_zero")
+    if not ctx.path("level_zero").exists:
+        ctx.symlink("include", "level_zero")
+
+def _handle_zero_loader(ctx):
+    lib_dir = "lib"
+    deb_lib_dir = "usr/lib/x86_64-linux-gnu"
+    if ctx.path(deb_lib_dir).exists and not ctx.path(lib_dir).exists:
+        result = ctx.execute(["mkdir", "-p", lib_dir])
+        if result.return_code:
+            fail("Failed to create {}:\nstdout:\n{}\nstderr:\n{}".format(
+                lib_dir,
+                result.stdout,
+                result.stderr,
+            ))
+
+        for name in [
+            "libze_loader",
+            "libze_tracing_layer",
+            "libze_validation_layer",
+        ]:
+            versioned = "{}.so.1".format(name)
+            if ctx.path("{}/{}".format(deb_lib_dir, versioned)).exists:
+                ctx.symlink(
+                    "{}/{}".format(deb_lib_dir, versioned),
+                    "{}/{}".format(lib_dir, versioned),
+                )
+                ctx.symlink(
+                    "{}/{}".format(lib_dir, versioned),
+                    "{}/{}.so".format(lib_dir, name),
+                )
 
 def _use_downloaded_archive(ctx):
     # buildifier: disable=function-docstring-args
@@ -134,11 +193,15 @@ def _use_downloaded_archive(ctx):
 
     if _is_installer_distribution(dist):
         _install_distribution(ctx, dist)
+    elif _is_deb_distribution(dist):
+        _extract_deb_distribution(ctx, dist)
     else:
         _download_distribution(ctx, dist)
 
     if ctx.name.endswith("level_zero"):
         _handle_level_zero(ctx)
+    elif ctx.name.endswith("zero_loader"):
+        _handle_zero_loader(ctx)
 
     build_template = ctx.attr.build_templates[dist_key]
     _build_file(ctx, Label(build_template))

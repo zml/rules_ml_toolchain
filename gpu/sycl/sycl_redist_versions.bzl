@@ -36,16 +36,42 @@ REDIST_DICT = {
     },
     "level_zero": {
         "ubuntu_24.10_2026.0": [
-            "https://tensorflow-file-hosting.s3.us-east-1.amazonaws.com/level-zero-1.21.10.tar.gz",
-            "e0ff1c6cb9b551019579a2dd35c3a611240c1b60918c75345faf9514142b9c34",
-            "level-zero-1.21.10",
+            "https://github.com/oneapi-src/level-zero/releases/download/v1.28.6/libze-dev_1.28.6%2Bu24.04_amd64.deb",
+            "93034c2a8396ad43a6bafb42469839940cfc9dc1ab64781fca3b62cc31b0df82",
+            "",
+            "deb",
+        ],
+        "ubuntu_24.04_2026.0": [
+            "https://github.com/oneapi-src/level-zero/releases/download/v1.28.6/libze-dev_1.28.6%2Bu24.04_amd64.deb",
+            "93034c2a8396ad43a6bafb42469839940cfc9dc1ab64781fca3b62cc31b0df82",
+            "",
+            "deb",
+        ],
+        "ubuntu_22.04_2026.0": [
+            "https://github.com/oneapi-src/level-zero/releases/download/v1.28.6/libze-dev_1.28.6%2Bu22.04_amd64.deb",
+            "97a7be5583ccda04aeb059b826b13a70be177a4e285be3862f63dd8673427dd4",
+            "",
+            "deb",
         ],
     },
     "zero_loader": {
         "ubuntu_24.10_2026.0": [
-            "https://tensorflow-file-hosting.s3.us-east-1.amazonaws.com/ze_loader_libs.tar.gz",
-            "71cbfd8ac59e1231f013e827ea8efe6cf5da36fad771da2e75e202423bd6b82e",
+            "https://github.com/oneapi-src/level-zero/releases/download/v1.28.6/libze1_1.28.6%2Bu24.04_amd64.deb",
+            "8af9dc06d9684a20a3f43754fe109968fba2ba085cfa572a4cc6ef0272f9bcd1",
             "",
+            "deb",
+        ],
+        "ubuntu_24.04_2026.0": [
+            "https://github.com/oneapi-src/level-zero/releases/download/v1.28.6/libze1_1.28.6%2Bu24.04_amd64.deb",
+            "8af9dc06d9684a20a3f43754fe109968fba2ba085cfa572a4cc6ef0272f9bcd1",
+            "",
+            "deb",
+        ],
+        "ubuntu_22.04_2026.0": [
+            "https://github.com/oneapi-src/level-zero/releases/download/v1.28.6/libze1_1.28.6%2Bu22.04_amd64.deb",
+            "52c5fd2b37a749770bbb4939fbb3cb5a855018a55171b9c8806c838fe5e67cc2",
+            "",
+            "deb",
         ],
     },
 }
@@ -63,12 +89,16 @@ BUILD_TEMPLATES = {
         "repo_name": "level_zero",
         "version_to_template": {
             "ubuntu_24.10_2026.0": "//gpu/sycl:level_zero.BUILD",
+            "ubuntu_24.04_2026.0": "//gpu/sycl:level_zero.BUILD",
+            "ubuntu_22.04_2026.0": "//gpu/sycl:level_zero.BUILD",
         },
     },
     "zero_loader": {
         "repo_name": "zero_loader",
         "version_to_template": {
             "ubuntu_24.10_2026.0": "//gpu/sycl:zero_loader.BUILD",
+            "ubuntu_24.04_2026.0": "//gpu/sycl:zero_loader.BUILD",
+            "ubuntu_22.04_2026.0": "//gpu/sycl:zero_loader.BUILD",
         },
     },
 }
