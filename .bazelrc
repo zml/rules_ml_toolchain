@@ -285,5 +285,15 @@ common:rocm_tsan --features=tsan
 common:rocm_tsan --strip=never
 common:rocm_tsan --copt=-g
 common:rocm_tsan --run_under=//cc/sanitizers:sanitizer_wrapper
+# #############################################################################
+# MUSA configuration
+# #############################################################################
+common:musa --repo_env TF_NEED_MUSA=1
+common:musa --@rules_ml_toolchain//common:enable_musa=True
+common:musa --define=using_musa=true
+common:musa --define=tensorflow_mkldnn_contraction_kernel=0
+common:musa --cxxopt=-std=c++17
+common:musa --@rules_ml_toolchain//common:enable_hermetic_cc=True
+common:musa --@rules_ml_toolchain//common:enable_hermetic_libraries=True
 
 try-import %workspace%/.bazelrc.local
