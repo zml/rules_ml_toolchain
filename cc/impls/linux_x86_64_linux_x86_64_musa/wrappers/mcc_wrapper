@@ -165,8 +165,6 @@ def InvokeLinker(argv):
     lib_paths = [p for p in MUSA_LIBRARY_PATH.split(":") if p]
     for path in lib_paths:
         flags.extend(["-L", path])
-    if not any(flag == "-lmusart" for flag in flags):
-        flags.append("-lmusart")
     cmd = [CPU_COMPILER] + flags
     if VERBOSE:
         Log(" ".join(cmd))
